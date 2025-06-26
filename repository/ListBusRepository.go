@@ -16,7 +16,7 @@ func NewListBusRepository() (ListBusRepository, error) {
 	return *newRepo, nil
 }
 
-func (l *ListBusRepository) FindById(id string) (*models.Bus, error) {
+func (l *ListBusRepository) GetById(id string) (*models.Bus, error) {
 	for _, bus := range l.busList {
 		if bus.Id == id {
 			return &bus, nil
@@ -25,7 +25,7 @@ func (l *ListBusRepository) FindById(id string) (*models.Bus, error) {
 	return nil, nil
 }
 
-func (l *ListBusRepository) FindByNumber(number string) (*models.Bus, error) {
+func (l *ListBusRepository) GetByNumber(number string) (*models.Bus, error) {
 	for _, bus := range l.busList {
 		if strings.ToUpper(bus.RegisterNumber) == strings.ToUpper(number) {
 			return &bus, nil
@@ -35,7 +35,7 @@ func (l *ListBusRepository) FindByNumber(number string) (*models.Bus, error) {
 }
 
 func (l *ListBusRepository) Add(bus *models.Bus) error {
-	exist, err := l.FindById(bus.Id)
+	exist, err := l.GetById(bus.Id)
 	if err != nil {
 		fmt.Println("Occured error, ", err)
 		return err
@@ -59,4 +59,15 @@ func (l *ListBusRepository) DeleteById(id string) error {
 		}
 	}
 	return errors.New("Bus not found")
+}
+
+func (l *ListBusRepository) UpdateById(bus *models.Bus) error {
+
+	for i, tBus := range l.busList {
+		if tBus.Id == bus.Id {
+			l.busList[i] = *bus
+			return nil
+		}
+	}
+	return nil
 }
