@@ -4,6 +4,7 @@ import (
 	"busManager/models"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"strings"
 )
 
@@ -43,6 +44,11 @@ func (l *ListBusRepository) Add(bus *models.Bus) error {
 	if exist != nil {
 		return errors.New("Bus already exists")
 	}
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+	bus.Id = id.String()
 	l.busList = append(l.busList, *bus)
 	return nil
 }
