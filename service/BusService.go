@@ -15,21 +15,27 @@ func NewBusService(r repository.BusRepository) *BusService {
 	return b
 }
 
-func (bs BusService) FindById(id string) (*models.Bus, error) {
+func (bs BusService) GetById(id string) (*models.Bus, error) {
 
 	bus, err := bs.repo.GetById(id)
-	if bus == nil {
-		return bus, errors.New("Bus not found")
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	if bus == nil {
+		return nil, errors.New("Bus not found")
+	}
+	return bus, nil
 }
 
-func (bs BusService) FindByNumber(number string) (*models.Bus, error) {
+func (bs BusService) GetByNumber(number string) (*models.Bus, error) {
 	bus, err := bs.repo.GetByNumber(number)
-	if bus == nil {
-		return bus, errors.New("Bus not found")
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	if bus == nil {
+		return nil, errors.New("Bus not found")
+	}
+	return bus, nil
 }
 
 func (bs BusService) Add(bus *models.Bus) error {
