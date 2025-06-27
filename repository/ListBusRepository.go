@@ -19,7 +19,7 @@ func NewListBusRepository() (ListBusRepository, error) {
 
 func (l *ListBusRepository) GetById(id string) (*models.Bus, error) {
 	for _, bus := range l.busList {
-		if bus.Id == id {
+		if bus.ID == id {
 			return &bus, nil
 		}
 	}
@@ -36,7 +36,7 @@ func (l *ListBusRepository) GetByNumber(number string) (*models.Bus, error) {
 }
 
 func (l *ListBusRepository) Add(bus *models.Bus) error {
-	exist, err := l.GetById(bus.Id)
+	exist, err := l.GetById(bus.ID)
 	if err != nil {
 		fmt.Println("Occured error, ", err)
 		return err
@@ -44,11 +44,14 @@ func (l *ListBusRepository) Add(bus *models.Bus) error {
 	if exist != nil {
 		return errors.New("Bus already exists")
 	}
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return err
+	if strings.TrimSpace(bus.ID) == "" {
+		id, err := uuid.NewRandom()
+		if err != nil {
+			return err
+		}
+		bus.ID = id.String()
 	}
-	bus.Id = id.String()
+
 	l.busList = append(l.busList, *bus)
 	return nil
 }
@@ -59,7 +62,7 @@ func (l *ListBusRepository) GetAll() []models.Bus {
 
 func (l *ListBusRepository) DeleteById(id string) error {
 	for i, bus := range l.busList {
-		if bus.Id == id {
+		if bus.ID == id {
 			l.busList = append(l.busList[:i], l.busList[i+1:]...)
 			return nil
 		}
@@ -70,7 +73,7 @@ func (l *ListBusRepository) DeleteById(id string) error {
 func (l *ListBusRepository) UpdateById(bus *models.Bus) error {
 
 	for i, tBus := range l.busList {
-		if tBus.Id == bus.Id {
+		if tBus.ID == bus.ID {
 			l.busList[i] = *bus
 			return nil
 		}

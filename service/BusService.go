@@ -7,10 +7,10 @@ import (
 )
 
 type BusService struct {
-	repo repository.BusRepository
+	repo repository.IBusRepository
 }
 
-func NewBusService(r repository.BusRepository) *BusService {
+func NewBusService(r repository.IBusRepository) *BusService {
 	b := &BusService{r}
 	return b
 }
@@ -44,7 +44,10 @@ func (bs BusService) Add(bus *models.Bus) error {
 }
 
 func (bs BusService) GetAll() []models.Bus {
-	return bs.repo.GetAll()
+	var m []models.Bus
+	m, _ = bs.repo.GetAll()
+	return m
+
 }
 
 func (bs BusService) DeleteById(id string) error {

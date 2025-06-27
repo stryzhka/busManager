@@ -1,11 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Bus struct {
-	Id             string
+	ID             string
 	Brand          string
-	Model          string
+	BusModel       string
 	RegisterNumber string
 	AssemblyDate   time.Time
 	LastRepairDate time.Time

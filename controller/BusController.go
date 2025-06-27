@@ -17,9 +17,9 @@ func NewBusController(bs service.BusService) *BusController {
 	return &BusController{bs}
 }
 
-func (bc BusController) GetBusById(id string) string {
+func (bc BusController) GetById(id string) string {
 	if strings.TrimSpace(id) == "" {
-		return customErrors.NewJsonError(errors.New("Id cant be null"))
+		return customErrors.NewJsonError(errors.New("ID cant be null"))
 	}
 	data, err := bc.bs.GetById(id)
 	if err != nil {
@@ -32,7 +32,7 @@ func (bc BusController) GetBusById(id string) string {
 	return string(jsonData)
 }
 
-func (bc BusController) GetBusByNumber(number string) string {
+func (bc BusController) GetByNumber(number string) string {
 	if strings.TrimSpace(number) == "" {
 		return customErrors.NewJsonError(errors.New("Number cant be null"))
 	}
@@ -47,7 +47,7 @@ func (bc BusController) GetBusByNumber(number string) string {
 	return string(jsonData)
 }
 
-func (bc BusController) GetAllBuses() string {
+func (bc BusController) GetAll() string {
 	data := bc.bs.GetAll()
 	jsonData, err := json.MarshalIndent(data, "", "    ")
 	if err != nil {
@@ -72,7 +72,7 @@ func (bc BusController) Add(busData string) string {
 
 func (bc BusController) DeleteById(id string) string {
 	if strings.TrimSpace(id) == "" {
-		return customErrors.NewJsonError(errors.New("Id cant be null"))
+		return customErrors.NewJsonError(errors.New("ID cant be null"))
 	}
 	err := bc.bs.DeleteById(id)
 	if err != nil {
