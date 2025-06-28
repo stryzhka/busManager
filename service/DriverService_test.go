@@ -2,7 +2,6 @@ package service
 
 import (
 	"busManager/models"
-	"busManager/repository"
 	"errors"
 	"github.com/google/uuid"
 	"testing"
@@ -10,7 +9,7 @@ import (
 )
 
 type MockDriverRepository struct {
-	repository.IDriverRepository
+	//repository.IDriverRepository
 	getByIdResp       *models.Driver
 	getByIdErr        error
 	getByPassportResp *models.Driver

@@ -7,6 +7,6 @@ type IDriverRepository interface {
 	GetByPassportSeries(passportSeries string) (*models.Driver, error)
 	Add(driver *models.Driver) error
 	DeleteById(id string) error
-	GetAll() ([]models.Bus, error)
-	UpdateById(bus *models.Bus) error
+	GetAll() ([]models.Driver, error)
+	UpdateById(driver *models.Driver) error
 }
