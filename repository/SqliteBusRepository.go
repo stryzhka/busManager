@@ -150,8 +150,7 @@ func (r *SqliteBusRepository) UpdateById(bus *models.Bus) error {
 		return err
 	}
 	_, err = r.db.Exec("UPDATE buses SET brand = $1, bus_model = $2, register_number = $3, assembly_date = $4, last_repair_date = $5 WHERE id = $6", bus.Brand, bus.BusModel, bus.RegisterNumber, bus.AssemblyDate, bus.LastRepairDate, bus.ID)
-	//r.db.Close()
-	//fmt.Println(result.LastInsertId())
+	
 	if err != nil {
 		return err
 	}
