@@ -136,3 +136,129 @@ func (rs RouteService) AssignBus(routeId, busId string) error {
 	}
 	return nil
 }
+
+func (rs RouteService) UnassignDriver(routeId, driverId string) error {
+	route, err := rs.GetById(routeId)
+	if route == nil {
+		return errors.New("Route not found")
+	}
+	if err != nil {
+		return err
+	}
+
+	driver, err := rs.driverRepo.GetById(driverId)
+	if driver == nil {
+		return errors.New("Driver not found")
+	}
+	if err != nil {
+		return err
+	}
+	err = rs.repo.UnassignDriver(routeId, driverId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (rs RouteService) UnassignBusStop(routeId, busStopId string) error {
+	route, err := rs.GetById(routeId)
+	if route == nil {
+		return errors.New("Route not found")
+	}
+	if err != nil {
+		return err
+	}
+
+	busStop, err := rs.busStopRepo.GetById(busStopId)
+	if busStop == nil {
+		return errors.New("Bus stop not found")
+	}
+	if err != nil {
+		return err
+	}
+	err = rs.repo.UnassignBusStop(routeId, busStopId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (rs RouteService) UnassignBus(routeId, busId string) error {
+	route, err := rs.GetById(routeId)
+	if route == nil {
+		return errors.New("Route not found")
+	}
+	if err != nil {
+		return err
+	}
+
+	bus, err := rs.busRepo.GetById(busId)
+	if bus == nil {
+		return errors.New("Bus not found")
+	}
+	if err != nil {
+		return err
+	}
+	err = rs.repo.UnassignBus(routeId, busId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (rs RouteService) GetAllDriversById(routeId string) ([]models.Driver, error) {
+	route, err := rs.GetById(routeId)
+	if route == nil {
+		return nil, errors.New("Route not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	drivers, err := rs.repo.GetAllDriversById(routeId)
+	if err != nil {
+		return nil, err
+	}
+	if drivers == nil {
+		return drivers, errors.New("Drivers not found")
+	}
+	return drivers, nil
+}
+
+func (rs RouteService) GetAllBusStopsById(routeId string) ([]models.BusStop, error) {
+	route, err := rs.GetById(routeId)
+	if route == nil {
+		return nil, errors.New("Route not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	busStops, err := rs.repo.GetAllBusStopsById(routeId)
+	if err != nil {
+		return nil, err
+	}
+	if busStops == nil {
+		return busStops, errors.New("Bus stops not found")
+	}
+	return busStops, nil
+}
+
+func (rs RouteService) GetAllBusesById(routeId string) ([]models.Bus, error) {
+	route, err := rs.GetById(routeId)
+	if route == nil {
+		return nil, errors.New("Route not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	buses, err := rs.repo.GetAllBusesById(routeId)
+	if err != nil {
+		return nil, err
+	}
+	if buses == nil {
+		return buses, errors.New("Buses not found")
+	}
+	return buses, nil
+}

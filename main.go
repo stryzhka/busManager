@@ -82,4 +82,11 @@ func main() {
 		"LicenseSeries":  "CD789012"
 	}`
 	fmt.Println(driverController.Add(jsonStr))
+	//jsonStr = `{
+	//
+	//	"Lat":           "32.21",
+	//	"Long":        "33.11",
+	//	"Name":     "Село пердяино",
+	//	}`
+	//fmt.Println(driverController.Add(jsonStr))
 }

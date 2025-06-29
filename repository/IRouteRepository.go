@@ -12,5 +12,11 @@ type IRouteRepository interface {
 	AssignDriver(routeId, driverId string) error
 	AssignBusStop(routeId, busStopId string) error
 	AssignBus(routeId, busId string) error
+	UnassignDriver(routeId, driverId string) error
+	UnassignBusStop(routeId, busStopId string) error
+	UnassignBus(routeId, busId string) error
+	GetAllDriversById(routeId string) ([]models.Driver, error)
+	GetAllBusStopsById(routeId string) ([]models.BusStop, error)
+	GetAllBusesById(routeId string) ([]models.Bus, error)
 	// TODO: getall for all models, unassign
 }

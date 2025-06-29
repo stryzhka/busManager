@@ -14,49 +14,92 @@ func setupTestDBRoute(t *testing.T) (*SqliteRouteRepository, func()) {
 	}
 
 	_, err = db.Exec(`
-		CREATE TABLE routes (
-			id TEXT PRIMARY KEY,
-			number TEXT NOT NULL
-		)
-	`)
+        CREATE TABLE routes (
+            id TEXT PRIMARY KEY,
+            number TEXT NOT NULL
+        )
+    `)
 	if err != nil {
 		t.Fatalf("Failed to create routes table: %v", err)
 	}
 
 	_, err = db.Exec(`
-		CREATE TABLE routes_drivers (
-			route_id TEXT NOT NULL,
-			driver_id TEXT NOT NULL,
-			PRIMARY KEY (route_id, driver_id),
-			FOREIGN KEY (route_id) REFERENCES routes(id)
-		)
-	`)
+        CREATE TABLE routes_drivers (
+            route_id TEXT NOT NULL,
+            driver_id TEXT NOT NULL,
+            PRIMARY KEY (route_id, driver_id),
+            FOREIGN KEY (route_id) REFERENCES routes(id)
+        )
+    `)
 	if err != nil {
 		t.Fatalf("Failed to create routes_drivers table: %v", err)
 	}
 
 	_, err = db.Exec(`
-		CREATE TABLE routes_bus_stops (
-			route_id TEXT NOT NULL,
-			bus_stop_id TEXT NOT NULL,
-			PRIMARY KEY (route_id, bus_stop_id),
-			FOREIGN KEY (route_id) REFERENCES routes(id)
-		)
-	`)
+        CREATE TABLE routes_bus_stops (
+            route_id TEXT NOT NULL,
+            bus_stop_id TEXT NOT NULL,
+            PRIMARY KEY (route_id, bus_stop_id),
+            FOREIGN KEY (route_id) REFERENCES routes(id)
+        )
+    `)
 	if err != nil {
 		t.Fatalf("Failed to create routes_bus_stops table: %v", err)
 	}
 
 	_, err = db.Exec(`
-		CREATE TABLE routes_buses (
-			route_id TEXT NOT NULL,
-			bus_id TEXT NOT NULL,
-			PRIMARY KEY (route_id, bus_id),
-			FOREIGN KEY (route_id) REFERENCES routes(id)
-		)
-	`)
+        CREATE TABLE routes_buses (
+            route_id TEXT NOT NULL,
+            bus_id TEXT NOT NULL,
+            PRIMARY KEY (route_id, bus_id),
+            FOREIGN KEY (route_id) REFERENCES routes(id)
+        )
+    `)
 	if err != nil {
 		t.Fatalf("Failed to create routes_buses table: %v", err)
+	}
+
+	// Добавляем таблицы для новых методов
+	_, err = db.Exec(`
+        CREATE TABLE drivers (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            surname TEXT,
+            patronymic TEXT,
+            birth_date DATETIME,
+            passport_series TEXT,
+            snils TEXT,
+            license_series TEXT
+        )
+    `)
+	if err != nil {
+		t.Fatalf("Failed to create drivers table: %v", err)
+	}
+
+	_, err = db.Exec(`
+        CREATE TABLE bus_stops (
+            id TEXT PRIMARY KEY,
+            lat REAL,
+            long REAL,
+            name TEXT
+        )
+    `)
+	if err != nil {
+		t.Fatalf("Failed to create bus_stops table: %v", err)
+	}
+
+	_, err = db.Exec(`
+        CREATE TABLE buses (
+            id TEXT PRIMARY KEY,
+            brand TEXT,
+            bus_model TEXT,
+            register_number TEXT,
+            assembly_date DATETIME,
+            last_repair_date DATETIME
+        )
+    `)
+	if err != nil {
+		t.Fatalf("Failed to create buses table: %v", err)
 	}
 
 	repo := &SqliteRouteRepository{db: db}
@@ -345,7 +388,6 @@ func TestSqliteRouteRepository_AssignDriver(t *testing.T) {
 		if err == nil {
 			t.Errorf("Expected error, got nil")
 		}
-		// Проверяем, что запись не добавлена
 		var count int
 		err = repo.db.QueryRow(`SELECT COUNT(*) FROM routes_drivers WHERE route_id = ? AND driver_id = ?`, uuid.New().String(), driverID).Scan(&count)
 		if err != nil {
@@ -447,6 +489,335 @@ func TestSqliteRouteRepository_AssignBus(t *testing.T) {
 		}
 		if count != 0 {
 			t.Errorf("Expected 0 records, got %d", count)
+		}
+	})
+}
+
+func TestSqliteRouteRepository_UnassignBusStop(t *testing.T) {
+	repo, cleanup := setupTestDBRoute(t)
+	defer cleanup()
+
+	routeID := uuid.New().String()
+	busStopID := uuid.New().String()
+
+	_, err := repo.db.Exec(`
+		INSERT INTO routes (id, number)
+		VALUES (?, ?)`,
+		routeID, "101")
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Предварительно добавляем связь
+	_, err = repo.db.Exec(`
+		INSERT INTO routes_bus_stops (route_id, bus_stop_id)
+		VALUES (?, ?)`,
+		routeID, busStopID)
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	t.Run("Unassign bus stop from route", func(t *testing.T) {
+		err := repo.UnassignBusStop(routeID, busStopID)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+
+		var count int
+		err = repo.db.QueryRow(`SELECT COUNT(*) FROM routes_bus_stops WHERE route_id = ? AND bus_stop_id = ?`, routeID, busStopID).Scan(&count)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if count != 0 {
+			t.Errorf("Expected 0 records in routes_bus_stops, got %d", count)
+		}
+	})
+
+	t.Run("Unassign bus stop from non-existent route", func(t *testing.T) {
+		err := repo.UnassignBusStop(uuid.New().String(), busStopID)
+		if err == nil || err.Error() != "Route not found" {
+			t.Errorf("Expected 'Route not found' error, got %v", err)
+		}
+	})
+
+	t.Run("Unassign bus stop with no existing relationship", func(t *testing.T) {
+		// Проверяем случай, когда связи нет
+		err := repo.UnassignBusStop(routeID, uuid.New().String())
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		// Ожидаем, что ничего не сломается
+	})
+}
+
+func TestSqliteRouteRepository_UnassignBus(t *testing.T) {
+	repo, cleanup := setupTestDBRoute(t)
+	defer cleanup()
+
+	routeID := uuid.New().String()
+	busID := uuid.New().String()
+
+	_, err := repo.db.Exec(`
+		INSERT INTO routes (id, number)
+		VALUES (?, ?)`,
+		routeID, "101")
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Предварительно добавляем связь
+	_, err = repo.db.Exec(`
+		INSERT INTO routes_buses (route_id, bus_id)
+		VALUES (?, ?)`,
+		routeID, busID)
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	t.Run("Unassign bus from route", func(t *testing.T) {
+		err := repo.UnassignBus(routeID, busID)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+
+		var count int
+		err = repo.db.QueryRow(`SELECT COUNT(*) FROM routes_buses WHERE route_id = ? AND bus_id = ?`, routeID, busID).Scan(&count)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if count != 0 {
+			t.Errorf("Expected 0 records in routes_buses, got %d", count)
+		}
+	})
+
+	t.Run("Unassign bus from non-existent route", func(t *testing.T) {
+		err := repo.UnassignBus(uuid.New().String(), busID)
+		if err == nil || err.Error() != "Route not found" {
+			t.Errorf("Expected 'Route not found' error, got %v", err)
+		}
+	})
+
+	t.Run("Unassign bus with no existing relationship", func(t *testing.T) {
+		err := repo.UnassignBus(routeID, uuid.New().String())
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+	})
+}
+
+func TestSqliteRouteRepository_UnassignDriver(t *testing.T) {
+	repo, cleanup := setupTestDBRoute(t)
+	defer cleanup()
+
+	routeID := uuid.New().String()
+	driverID := uuid.New().String()
+
+	_, err := repo.db.Exec(`
+		INSERT INTO routes (id, number)
+		VALUES (?, ?)`,
+		routeID, "101")
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Предварительно добавляем связь
+	_, err = repo.db.Exec(`
+		INSERT INTO routes_drivers (route_id, driver_id)
+		VALUES (?, ?)`,
+		routeID, driverID)
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	t.Run("Unassign driver from route", func(t *testing.T) {
+		err := repo.UnassignDriver(routeID, driverID)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+
+		var count int
+		err = repo.db.QueryRow(`SELECT COUNT(*) FROM routes_drivers WHERE route_id = ? AND driver_id = ?`, routeID, driverID).Scan(&count)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if count != 0 {
+			t.Errorf("Expected 0 records in routes_drivers, got %d", count)
+		}
+	})
+
+	t.Run("Unassign driver from non-existent route", func(t *testing.T) {
+		err := repo.UnassignDriver(uuid.New().String(), driverID)
+		if err == nil || err.Error() != "Route not found" {
+			t.Errorf("Expected 'Route not found' error, got %v", err)
+		}
+	})
+
+	t.Run("Unassign driver with no existing relationship", func(t *testing.T) {
+		err := repo.UnassignDriver(routeID, uuid.New().String())
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+	})
+}
+
+func TestSqliteRouteRepository_GetAllDriversById(t *testing.T) {
+	repo, cleanup := setupTestDBRoute(t)
+	defer cleanup()
+
+	routeID := uuid.New().String()
+	driverID1 := uuid.New().String()
+	driverID2 := uuid.New().String()
+
+	// Вставляем маршрут
+	_, err := repo.db.Exec(`
+        INSERT INTO routes (id, number)
+        VALUES (?, ?)`,
+		routeID, "101")
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Вставляем водителей
+	_, err = repo.db.Exec(`
+        INSERT INTO drivers (id, name, surname, patronymic, birth_date, passport_series, snils, license_series)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?)`,
+		driverID1, "John", "Doe", "Smith", "1990-01-01", "1234", "123-456-789 01", "AB123",
+		driverID2, "Jane", "Smith", "Johnson", "1992-02-02", "5678", "987-654-321 02", "CD456")
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Вставляем связи
+	_, err = repo.db.Exec(`
+        INSERT INTO routes_drivers (route_id, driver_id)
+        VALUES (?, ?), (?, ?)`,
+		routeID, driverID1, routeID, driverID2)
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	t.Run("Get all drivers by route", func(t *testing.T) {
+		drivers, err := repo.GetAllDriversById(routeID)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if len(drivers) != 2 {
+			t.Errorf("Expected 2 drivers, got %d", len(drivers))
+		}
+	})
+
+	t.Run("Get drivers from non-existent route", func(t *testing.T) {
+		_, err := repo.GetAllDriversById(uuid.New().String())
+		if err == nil || err.Error() != "Route not found" {
+			t.Errorf("Expected 'Route not found' error, got %v", err)
+		}
+	})
+}
+
+func TestSqliteRouteRepository_GetAllBusStopsById(t *testing.T) {
+	repo, cleanup := setupTestDBRoute(t)
+	defer cleanup()
+
+	routeID := uuid.New().String()
+	busStopID1 := uuid.New().String()
+	busStopID2 := uuid.New().String()
+
+	// Вставляем маршрут
+	_, err := repo.db.Exec(`
+        INSERT INTO routes (id, number)
+        VALUES (?, ?)`,
+		routeID, "101")
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Вставляем автобусные остановки
+	_, err = repo.db.Exec(`
+        INSERT INTO bus_stops (id, lat, long, name)
+        VALUES (?, ?, ?, ?), (?, ?, ?, ?)`,
+		busStopID1, 55.7558, 37.6173, "Red Square",
+		busStopID2, 55.7539, 37.6208, "Kremlin")
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Вставляем связи
+	_, err = repo.db.Exec(`
+        INSERT INTO routes_bus_stops (route_id, bus_stop_id)
+        VALUES (?, ?), (?, ?)`,
+		routeID, busStopID1, routeID, busStopID2)
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	t.Run("Get all bus stops by route", func(t *testing.T) {
+		busStops, err := repo.GetAllBusStopsById(routeID)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if len(busStops) != 2 {
+			t.Errorf("Expected 2 bus stops, got %d", len(busStops))
+		}
+	})
+
+	t.Run("Get bus stops from non-existent route", func(t *testing.T) {
+		_, err := repo.GetAllBusStopsById(uuid.New().String())
+		if err == nil || err.Error() != "Route not found" {
+			t.Errorf("Expected 'Route not found' error, got %v", err)
+		}
+	})
+}
+
+func TestSqliteRouteRepository_GetAllBusesById(t *testing.T) {
+	repo, cleanup := setupTestDBRoute(t)
+	defer cleanup()
+
+	routeID := uuid.New().String()
+	busID1 := uuid.New().String()
+	busID2 := uuid.New().String()
+
+	// Вставляем маршрут
+	_, err := repo.db.Exec(`
+        INSERT INTO routes (id, number)
+        VALUES (?, ?)`,
+		routeID, "101")
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Вставляем автобусы
+	_, err = repo.db.Exec(`
+        INSERT INTO buses (id, brand, bus_model, register_number, assembly_date, last_repair_date)
+        VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)`,
+		busID1, "Mercedes", "Citaro", "X123YZ", "2020-01-01", "2023-06-01",
+		busID2, "Volvo", "B8RLE", "Y456AB", "2019-02-01", "2023-06-15")
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Вставляем связи
+	_, err = repo.db.Exec(`
+        INSERT INTO routes_buses (route_id, bus_id)
+        VALUES (?, ?), (?, ?)`,
+		routeID, busID1, routeID, busID2)
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	t.Run("Get all buses by route", func(t *testing.T) {
+		buses, err := repo.GetAllBusesById(routeID)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if len(buses) != 2 {
+			t.Errorf("Expected 2 buses, got %d", len(buses))
+		}
+	})
+
+	t.Run("Get buses from non-existent route", func(t *testing.T) {
+		_, err := repo.GetAllBusesById(uuid.New().String())
+		if err == nil || err.Error() != "Route not found" {
+			t.Errorf("Expected 'Route not found' error, got %v", err)
 		}
 	})
 }

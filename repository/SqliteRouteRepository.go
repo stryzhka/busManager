@@ -105,7 +105,6 @@ func (r *SqliteRouteRepository) GetAll() ([]models.Route, error) {
 			return nil, err
 		}
 		routes = append(routes, *route)
-
 	}
 	return routes, nil
 }
@@ -185,4 +184,148 @@ VALUES ($1, $2)`, routeId,
 		return err
 	}
 	return nil
+}
+
+func (r *SqliteRouteRepository) UnassignBusStop(routeId, busStopId string) error {
+	exist, err := r.GetById(routeId)
+	if exist == nil {
+		return errors.New("Route not found")
+	}
+	_, err = r.db.Exec(`DELETE FROM routes_bus_stops WHERE route_id = $1 AND bus_stop_id = $2`, routeId, busStopId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *SqliteRouteRepository) UnassignBus(routeId, busId string) error {
+	exist, err := r.GetById(routeId)
+	if exist == nil {
+		return errors.New("Route not found")
+	}
+	_, err = r.db.Exec(`DELETE FROM routes_buses WHERE route_id = $1 AND bus_id = $2`, routeId, busId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *SqliteRouteRepository) UnassignDriver(routeId, driverId string) error {
+	exist, err := r.GetById(routeId)
+	if exist == nil {
+		return errors.New("Route not found")
+	}
+	_, err = r.db.Exec(`DELETE FROM routes_drivers WHERE route_id = $1 AND driver_id = $2`, routeId, driverId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *SqliteRouteRepository) GetAllDriversById(routeId string) ([]models.Driver, error) {
+	var drivers []models.Driver
+	exist, err := r.GetById(routeId)
+	if exist == nil {
+		return nil, errors.New("Route not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.db.Query(`
+		SELECT d.id, d.name, d.surname, d.patronymic, d.birth_date, d.passport_series, d.snils, d.license_series
+		FROM drivers d 
+		JOIN routes_drivers rd ON d.id = rd.driver_id
+		WHERE rd.route_id=$1
+	`, routeId)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		driver := &models.Driver{}
+		err := rows.Scan(
+			&driver.ID,
+			&driver.Name,
+			&driver.Surname,
+			&driver.Patronymic,
+			&driver.BirthDate,
+			&driver.PassportSeries,
+			&driver.Snils,
+			&driver.LicenseSeries,
+		)
+		if err != nil {
+			return nil, err
+		}
+		drivers = append(drivers, *driver)
+	}
+	return drivers, nil
+}
+
+func (r *SqliteRouteRepository) GetAllBusStopsById(routeId string) ([]models.BusStop, error) {
+	var busStops []models.BusStop
+	exist, err := r.GetById(routeId)
+	if exist == nil {
+		return nil, errors.New("Route not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.db.Query(`
+		SELECT d.id, d.lat, d.long, d.name
+		FROM bus_stops d 
+		JOIN routes_bus_stops rd ON d.id = rd.bus_stop_id
+		WHERE rd.route_id=$1
+	`, routeId)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		busStop := &models.BusStop{}
+		err := rows.Scan(
+			&busStop.ID,
+			&busStop.Lat,
+			&busStop.Long,
+			&busStop.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		busStops = append(busStops, *busStop)
+	}
+	return busStops, nil
+}
+
+func (r *SqliteRouteRepository) GetAllBusesById(routeId string) ([]models.Bus, error) {
+	var buses []models.Bus
+	exist, err := r.GetById(routeId)
+	if exist == nil {
+		return nil, errors.New("Route not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.db.Query(`
+		SELECT d.id, d.brand, d.bus_model, d.register_number, d.assembly_date, d.last_repair_date
+		FROM buses d 
+		JOIN routes_buses rd ON d.id = rd.bus_id
+		WHERE rd.route_id=$1
+	`, routeId)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		bus := &models.Bus{}
+		err := rows.Scan(
+			&bus.ID,
+			&bus.Brand,
+			&bus.BusModel,
+			&bus.RegisterNumber,
+			&bus.AssemblyDate,
+			&bus.LastRepairDate,
+		)
+		if err != nil {
+			return nil, err
+		}
+		buses = append(buses, *bus)
+	}
+	return buses, nil
 }
