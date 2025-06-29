@@ -16,10 +16,8 @@ func setupTestDBBusStop(t *testing.T) (*SqliteBusStopRepository, func()) {
 	_, err = db.Exec(`
 		CREATE TABLE bus_stops (
 			id TEXT PRIMARY KEY,
-			route_id TEXT NOT NULL,
 			lat REAL NOT NULL,
 			long REAL NOT NULL,
-			"order" INTEGER NOT NULL,
 			name TEXT NOT NULL
 		)
 	`)
@@ -36,18 +34,16 @@ func TestSqliteBusStopRepository_GetById(t *testing.T) {
 	defer cleanup()
 
 	busStop := &models.BusStop{
-		ID:      uuid.New().String(),
-		RouteId: "route1",
-		Lat:     55.7558,
-		Long:    37.6173,
-		Order:   1,
-		Name:    "Stop A",
+		ID:   uuid.New().String(),
+		Lat:  55.7558,
+		Long: 37.6173,
+		Name: "Stop A",
 	}
 
 	_, err := repo.db.Exec(`
-		INSERT INTO bus_stops (id, route_id, lat, long, "order", name)
-		VALUES (?, ?, ?, ?, ?, ?)`,
-		busStop.ID, busStop.RouteId, busStop.Lat, busStop.Long, busStop.Order, busStop.Name)
+		INSERT INTO bus_stops (id, lat, long, name)
+		VALUES (?, ?, ?, ?)`,
+		busStop.ID, busStop.Lat, busStop.Long, busStop.Name)
 	if err != nil {
 		t.Fatalf("Failed to insert test data: %v", err)
 	}
@@ -78,18 +74,16 @@ func TestSqliteBusStopRepository_GetByName(t *testing.T) {
 	defer cleanup()
 
 	busStop := &models.BusStop{
-		ID:      uuid.New().String(),
-		RouteId: "route1",
-		Lat:     55.7558,
-		Long:    37.6173,
-		Order:   1,
-		Name:    "Stop A",
+		ID:   uuid.New().String(),
+		Lat:  55.7558,
+		Long: 37.6173,
+		Name: "Stop A",
 	}
 
 	_, err := repo.db.Exec(`
-		INSERT INTO bus_stops (id, route_id, lat, long, "order", name)
-		VALUES (?, ?, ?, ?, ?, ?)`,
-		busStop.ID, busStop.RouteId, busStop.Lat, busStop.Long, busStop.Order, busStop.Name)
+		INSERT INTO bus_stops (id, lat, long, name)
+		VALUES (?, ?, ?, ?)`,
+		busStop.ID, busStop.Lat, busStop.Long, busStop.Name)
 	if err != nil {
 		t.Fatalf("Failed to insert test data: %v", err)
 	}
@@ -120,11 +114,9 @@ func TestSqliteBusStopRepository_Add(t *testing.T) {
 	defer cleanup()
 
 	busStop := &models.BusStop{
-		RouteId: "route1",
-		Lat:     55.7558,
-		Long:    37.6173,
-		Order:   1,
-		Name:    "Stop A",
+		Lat:  55.7558,
+		Long: 37.6173,
+		Name: "Stop A",
 	}
 
 	t.Run("Add new bus stop", func(t *testing.T) {
@@ -161,27 +153,23 @@ func TestSqliteBusStopRepository_GetAll(t *testing.T) {
 	defer cleanup()
 
 	busStop1 := &models.BusStop{
-		ID:      uuid.New().String(),
-		RouteId: "route1",
-		Lat:     55.7558,
-		Long:    37.6173,
-		Order:   1,
-		Name:    "Stop A",
+		ID:   uuid.New().String(),
+		Lat:  55.7558,
+		Long: 37.6173,
+		Name: "Stop A",
 	}
 	busStop2 := &models.BusStop{
-		ID:      uuid.New().String(),
-		RouteId: "route1",
-		Lat:     55.7522,
-		Long:    37.6156,
-		Order:   2,
-		Name:    "Stop B",
+		ID:   uuid.New().String(),
+		Lat:  55.7522,
+		Long: 37.6156,
+		Name: "Stop B",
 	}
 
 	_, err := repo.db.Exec(`
-		INSERT INTO bus_stops (id, route_id, lat, long, "order", name)
-		VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)`,
-		busStop1.ID, busStop1.RouteId, busStop1.Lat, busStop1.Long, busStop1.Order, busStop1.Name,
-		busStop2.ID, busStop2.RouteId, busStop2.Lat, busStop2.Long, busStop2.Order, busStop2.Name)
+		INSERT INTO bus_stops (id, lat, long, name)
+		VALUES (?, ?, ?, ?), (?, ?, ?, ?)`,
+		busStop1.ID, busStop1.Lat, busStop1.Long, busStop1.Name,
+		busStop2.ID, busStop2.Lat, busStop2.Long, busStop2.Name)
 	if err != nil {
 		t.Fatalf("Failed to insert test data: %v", err)
 	}
@@ -212,74 +200,21 @@ func TestSqliteBusStopRepository_GetAll(t *testing.T) {
 	})
 }
 
-func TestSqliteBusStopRepository_GetAllByRouteId(t *testing.T) {
-	repo, cleanup := setupTestDBBusStop(t)
-	defer cleanup()
-
-	busStop1 := &models.BusStop{
-		ID:      uuid.New().String(),
-		RouteId: "route1",
-		Lat:     55.7558,
-		Long:    37.6173,
-		Order:   1,
-		Name:    "Stop A",
-	}
-	busStop2 := &models.BusStop{
-		ID:      uuid.New().String(),
-		RouteId: "route1",
-		Lat:     55.7522,
-		Long:    37.6156,
-		Order:   2,
-		Name:    "Stop B",
-	}
-
-	_, err := repo.db.Exec(`
-		INSERT INTO bus_stops (id, route_id, lat, long, "order", name)
-		VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)`,
-		busStop1.ID, busStop1.RouteId, busStop1.Lat, busStop1.Long, busStop1.Order, busStop1.Name,
-		busStop2.ID, busStop2.RouteId, busStop2.Lat, busStop2.Long, busStop2.Order, busStop2.Name)
-	if err != nil {
-		t.Fatalf("Failed to insert test data: %v", err)
-	}
-
-	t.Run("Get all bus stops by route ID", func(t *testing.T) {
-		busStops, err := repo.GetAllByRouteId("route1")
-		if err != nil {
-			t.Errorf("Expected no error, got %v", err)
-		}
-		if len(busStops) != 2 {
-			t.Errorf("Expected 2 bus stops, got %d", len(busStops))
-		}
-	})
-
-	t.Run("Get all by non-existent route ID", func(t *testing.T) {
-		busStops, err := repo.GetAllByRouteId("route2")
-		if err != nil {
-			t.Errorf("Expected no error, got %v", err)
-		}
-		if len(busStops) != 0 {
-			t.Errorf("Expected 0 bus stops, got %d", len(busStops))
-		}
-	})
-}
-
 func TestSqliteBusStopRepository_DeleteById(t *testing.T) {
 	repo, cleanup := setupTestDBBusStop(t)
 	defer cleanup()
 
 	busStop := &models.BusStop{
-		ID:      uuid.New().String(),
-		RouteId: "route1",
-		Lat:     55.7558,
-		Long:    37.6173,
-		Order:   1,
-		Name:    "Stop A",
+		ID:   uuid.New().String(),
+		Lat:  55.7558,
+		Long: 37.6173,
+		Name: "Stop A",
 	}
 
 	_, err := repo.db.Exec(`
-		INSERT INTO bus_stops (id, route_id, lat, long, "order", name)
-		VALUES (?, ?, ?, ?, ?, ?)`,
-		busStop.ID, busStop.RouteId, busStop.Lat, busStop.Long, busStop.Order, busStop.Name)
+		INSERT INTO bus_stops (id, lat, long, name)
+		VALUES (?, ?, ?, ?)`,
+		busStop.ID, busStop.Lat, busStop.Long, busStop.Name)
 	if err != nil {
 		t.Fatalf("Failed to insert test data: %v", err)
 	}
@@ -309,30 +244,26 @@ func TestSqliteBusStopRepository_UpdateById(t *testing.T) {
 	defer cleanup()
 
 	busStop := &models.BusStop{
-		ID:      uuid.New().String(),
-		RouteId: "route1",
-		Lat:     55.7558,
-		Long:    37.6173,
-		Order:   1,
-		Name:    "Stop A",
+		ID:   uuid.New().String(),
+		Lat:  55.7558,
+		Long: 37.6173,
+		Name: "Stop A",
 	}
 
 	_, err := repo.db.Exec(`
-		INSERT INTO bus_stops (id, route_id, lat, long, "order", name)
-		VALUES (?, ?, ?, ?, ?, ?)`,
-		busStop.ID, busStop.RouteId, busStop.Lat, busStop.Long, busStop.Order, busStop.Name)
+		INSERT INTO bus_stops (id, lat, long, name)
+		VALUES (?, ?, ?, ?)`,
+		busStop.ID, busStop.Lat, busStop.Long, busStop.Name)
 	if err != nil {
 		t.Fatalf("Failed to insert test data: %v", err)
 	}
 
 	t.Run("Update existing bus stop", func(t *testing.T) {
 		updatedBusStop := &models.BusStop{
-			ID:      busStop.ID,
-			RouteId: "route2",
-			Lat:     55.7522,
-			Long:    37.6156,
-			Order:   2,
-			Name:    "Stop B",
+			ID:   busStop.ID,
+			Lat:  55.7522,
+			Long: 37.6156,
+			Name: "Stop B",
 		}
 
 		err := repo.UpdateById(updatedBusStop)
@@ -347,18 +278,16 @@ func TestSqliteBusStopRepository_UpdateById(t *testing.T) {
 		if result == nil {
 			t.Errorf("Expected bus stop, got nil")
 		} else if result.Name != updatedBusStop.Name || result.Lat != updatedBusStop.Lat {
-			t.Errorf("Expected updated bus stop data, got %v", result)
+			t.Errorf("Expected updated bus stop data %v, got %v", updatedBusStop, result)
 		}
 	})
 
 	t.Run("Update non-existent bus stop", func(t *testing.T) {
 		nonExistentBusStop := &models.BusStop{
-			ID:      uuid.New().String(),
-			RouteId: "route2",
-			Lat:     55.7522,
-			Long:    37.6156,
-			Order:   2,
-			Name:    "Stop B",
+			ID:   uuid.New().String(),
+			Lat:  55.7522,
+			Long: 37.6156,
+			Name: "Stop B",
 		}
 
 		err := repo.UpdateById(nonExistentBusStop)

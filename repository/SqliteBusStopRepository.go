@@ -24,14 +24,12 @@ func NewSqliteBusStopRepository(dbPath string) (*SqliteBusStopRepository, error)
 func (r *SqliteBusStopRepository) GetById(id string) (*models.BusStop, error) {
 	stop := &models.BusStop{}
 	err := r.db.QueryRow(`
-		SELECT id, route_id, lat, long, "order", name 
+		SELECT id, lat, long, name 
 		FROM bus_stops 
 		WHERE id = $1`, id).Scan(
 		&stop.ID,
-		&stop.RouteId,
 		&stop.Lat,
 		&stop.Long,
-		&stop.Order,
 		&stop.Name,
 	)
 	if err != nil {
@@ -47,14 +45,12 @@ func (r *SqliteBusStopRepository) GetById(id string) (*models.BusStop, error) {
 func (r *SqliteBusStopRepository) GetByName(name string) (*models.BusStop, error) {
 	stop := &models.BusStop{}
 	err := r.db.QueryRow(`
-		SELECT id, route_id, lat, long, "order", name 
+		SELECT id, lat, long, name 
 		FROM bus_stops 
-		WHERE name = $6`, name).Scan(
+		WHERE name = $4`, name).Scan(
 		&stop.ID,
-		&stop.RouteId,
 		&stop.Lat,
 		&stop.Long,
-		&stop.Order,
 		&stop.Name,
 	)
 	if err != nil {
@@ -80,13 +76,11 @@ func (r *SqliteBusStopRepository) Add(busStop *models.BusStop) error {
 		busStop.ID = id.String()
 	}
 	_, err = r.db.Exec(`INSERT into bus_stops
-    (id, route_id, lat, long, "order", name ) 
-VALUES ($1, $2, $3, $4, $5, $6)`,
+    (id, lat, long, name ) 
+VALUES ($1, $2, $3, $4)`,
 		&busStop.ID,
-		&busStop.RouteId,
 		&busStop.Lat,
 		&busStop.Long,
-		&busStop.Order,
 		&busStop.Name)
 	if err != nil {
 		return err
@@ -97,7 +91,7 @@ VALUES ($1, $2, $3, $4, $5, $6)`,
 func (r *SqliteBusStopRepository) GetAll() ([]models.BusStop, error) {
 	var busStops []models.BusStop
 	rows, err := r.db.Query(`
-		SELECT id, route_id, lat, long, "order", name
+		SELECT id, lat, long, name
 		FROM bus_stops 
 		`)
 	if err != nil {
@@ -110,42 +104,8 @@ func (r *SqliteBusStopRepository) GetAll() ([]models.BusStop, error) {
 		busStop := &models.BusStop{}
 		err := rows.Scan(
 			&busStop.ID,
-			&busStop.RouteId,
 			&busStop.Lat,
 			&busStop.Long,
-			&busStop.Order,
-			&busStop.Name,
-		)
-		if err != nil {
-			return nil, err
-		}
-		busStops = append(busStops, *busStop)
-
-	}
-	return busStops, nil
-}
-
-func (r *SqliteBusStopRepository) GetAllByRouteId(routeId string) ([]models.BusStop, error) {
-	var busStops []models.BusStop
-	rows, err := r.db.Query(`
-		SELECT id, route_id, lat, long, "order", name
-		FROM bus_stops 
-		WHERE route_id = $1
-		`, routeId)
-	if err != nil {
-		//if err == sql.ErrNoRows {
-		//	return nil, errors.New("Empty DB")
-		//}
-		return nil, err
-	}
-	for rows.Next() {
-		busStop := &models.BusStop{}
-		err := rows.Scan(
-			&busStop.ID,
-			&busStop.RouteId,
-			&busStop.Lat,
-			&busStop.Long,
-			&busStop.Order,
 			&busStop.Name,
 		)
 		if err != nil {
@@ -180,11 +140,9 @@ func (r *SqliteBusStopRepository) UpdateById(busStop *models.BusStop) error {
 	if err != nil {
 		return err
 	}
-	_, err = r.db.Exec(`UPDATE bus_stops SET route_id = $1, lat = $2, long = $3, "order" = $4, name = $5 WHERE id = $6`,
-		busStop.RouteId,
+	_, err = r.db.Exec(`UPDATE bus_stops SET lat = $1, long = $2, name = $3 WHERE id = $4`,
 		busStop.Lat,
 		busStop.Long,
-		busStop.Order,
 		busStop.Name,
 		busStop.ID,
 	)

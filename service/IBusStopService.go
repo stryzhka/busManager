@@ -1,8 +1,8 @@
-package repository
+package service
 
 import "busManager/models"
 
-type IBusStopRepository interface {
+type IBusStopService interface {
 	GetById(id string) (*models.BusStop, error)
 	GetByName(name string) (*models.BusStop, error)
 	Add(stop *models.BusStop) error
