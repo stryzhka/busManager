@@ -43,10 +43,13 @@ func (ds BusStopService) Add(busStop *models.BusStop) error {
 	return err
 }
 
-func (ds BusStopService) GetAll() []models.BusStop {
+func (ds BusStopService) GetAll() ([]models.BusStop, error) {
 	var m []models.BusStop
-	m, _ = ds.repo.GetAll()
-	return m
+	m, err := ds.repo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
 
 }
 

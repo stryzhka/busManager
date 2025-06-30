@@ -46,6 +46,11 @@ func main() {
 	driverService := service.NewDriverService(driverRepo)
 	busController := controller.NewBusController(*busService)
 	driverController := controller.NewDriverController(*driverService)
+	routeRepository, err := repository.NewSqliteRouteRepository("db.db")
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	jsonStr := `
 	{
 		"Id": "",
@@ -82,6 +87,42 @@ func main() {
 		"LicenseSeries":  "CD789012"
 	}`
 	fmt.Println(driverController.Add(jsonStr))
+
+	busStopRepository, err := repository.NewSqliteBusStopRepository("db.db")
+	if err != nil {
+		fmt.Println(err)
+	}
+	busStopService := service.NewBusStopService(busStopRepository)
+
+	jsonStr = `{
+		
+		"Name":           "педовка панк свинарник",
+		"Lat":        22.42122322331,
+		"Long":     12.45611345
+		
+		
+	}`
+	routeService := service.NewRouteService(
+		routeRepository,
+		driverRepo,
+		r,
+		busStopRepository,
+	)
+	busStopController := controller.NewBusStopController(busStopService)
+	routeController := controller.NewRouteController(routeService)
+	fmt.Println(busStopController.Add(jsonStr))
+	fmt.Println(busStopController.GetAll())
+	jsonStr = `{
+		
+		"Number":           "77"
+		
+		
+		
+	}`
+	//fmt.Println(routeController.Add(jsonStr))
+	fmt.Println(routeController.AssignDriver("0bdba519-1b7b-4a0d-b890-732e368581d2", "9ffde5df-fc47-4990-b75f-3be85acfc55a"))
+	fmt.Println(routeController.GetAllDriversById("0bdba519-1b7b-4a0d-b890-732e368581d2"))
+	//routeController.AssignDriver()
 	//jsonStr = `{
 	//
 	//	"Lat":           "32.21",

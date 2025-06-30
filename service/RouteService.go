@@ -51,10 +51,13 @@ func (rs RouteService) Add(route *models.Route) error {
 	return err
 }
 
-func (rs RouteService) GetAll() []models.Route {
+func (rs RouteService) GetAll() ([]models.Route, error) {
 	var m []models.Route
-	m, _ = rs.repo.GetAll()
-	return m
+	m, err := rs.repo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
 
 }
 

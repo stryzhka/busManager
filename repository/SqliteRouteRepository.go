@@ -146,6 +146,14 @@ func (r *SqliteRouteRepository) AssignDriver(routeId, driverId string) error {
 	if exist == nil {
 		return errors.New("Route not found")
 	}
+	var count int
+	err = r.db.QueryRow(`SELECT COUNT(*) FROM routes_drivers WHERE route_id = $1 AND driver_id = $2`, routeId, driverId).Scan(&count)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return errors.New("Pair route_id and driver_id already exists")
+	}
 	_, err = r.db.Exec(`INSERT into routes_drivers (route_id, driver_id) 
 VALUES ($1, $2)`, routeId,
 		driverId,
@@ -161,6 +169,14 @@ func (r *SqliteRouteRepository) AssignBusStop(routeId, busStopId string) error {
 	if exist == nil {
 		return errors.New("Route not found")
 	}
+	var count int
+	err = r.db.QueryRow(`SELECT COUNT(*) FROM routes_bus_stops WHERE route_id = $1 AND bus_stop_id = $2`, routeId, busStopId).Scan(&count)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return errors.New("Pair route_id and bus_stop_id already exists")
+	}
 	_, err = r.db.Exec(`INSERT into routes_bus_stops (route_id, bus_stop_id) 
 VALUES ($1, $2)`, routeId,
 		busStopId,
@@ -175,6 +191,14 @@ func (r *SqliteRouteRepository) AssignBus(routeId, busId string) error {
 	exist, err := r.GetById(routeId)
 	if exist == nil {
 		return errors.New("Route not found")
+	}
+	var count int
+	err = r.db.QueryRow(`SELECT COUNT(*) FROM routes_buses WHERE route_id = $1 AND bus_id = $2`, routeId, busId).Scan(&count)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return errors.New("Pair route_id and bus_id already exists")
 	}
 	_, err = r.db.Exec(`INSERT into routes_buses (route_id, bus_id) 
 VALUES ($1, $2)`, routeId,
