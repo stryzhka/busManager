@@ -1,6 +1,7 @@
 package main
 
 import (
+	"busManager/controller"
 	"context"
 	"fmt"
 )
@@ -8,11 +9,25 @@ import (
 // App struct
 type App struct {
 	ctx context.Context
+	//busRepo     repository.IBusStopRepository
+	//driverRepo  repository.IDriverRepository
+	//busStopRepo repository.IBusStopRepository
+	//
+	//busService     service.IBusService
+	//driverService  service.IDriverService
+	//busStopService service.IBusStopService
+
+	BusController     controller.BusController
+	DriverController  controller.DriverController
+	BusStopController controller.BusStopController
+	RouteController   controller.RouteController
 }
 
 // NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
+func NewApp() (*App, error) {
+	app := &App{}
+
+	return app, nil
 }
 
 // startup is called when the app starts. The context is saved
