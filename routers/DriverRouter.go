@@ -26,3 +26,32 @@ func NewDriverRouter() (*DriverRouter, error) {
 func (a *DriverRouter) Startup(ctx context.Context) {
 	a.ctx = ctx
 }
+
+func (a *DriverRouter) GetById(id string) string {
+	data := a.DriverController.GetById(id)
+	return data
+}
+
+func (a *DriverRouter) GetByPassportSeries(number string) string {
+	data := a.DriverController.GetByPassportSeries(number)
+	return data
+}
+
+func (a *DriverRouter) GetAll() string {
+	data := a.DriverController.GetAll()
+	return data
+}
+
+func (a *DriverRouter) Add(driverData string) string {
+	data := a.DriverController.Add(driverData)
+	return data
+}
+
+func (a *DriverRouter) DeleteById(id string) string {
+
+	return a.DriverController.DeleteById(id)
+}
+
+func (a *DriverRouter) UpdateById(driverData string) string {
+	return a.DriverController.UpdateById(driverData)
+}
