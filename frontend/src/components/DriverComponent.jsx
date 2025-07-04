@@ -5,6 +5,7 @@ import ms_sans_serif from "../assets/fonts/fixedsys.woff2";
 import ms_sans_serif_bold from 'react95/dist/fonts/ms_sans_serif_bold.woff2';
 import original from 'react95/dist/themes/original';
 import {GetAll, Add, DeleteById, GetById, UpdateById} from "../../wailsjs/go/routers/DriverRouter.js";
+import CustomAlert from "./CustomAlert.jsx";
 
 const GlobalStyles = createGlobalStyle`
   ${styleReset}
@@ -69,8 +70,7 @@ const DriverComponent = () => {
         GetById(item.ID).then(
             result => {
                 const selectedData = JSON.parse(result);
-                selectedData.AssemblyDate = convertISOToDate(selectedData.AssemblyDate)
-                selectedData.LastRepairDate = convertISOToDate(selectedData.LastRepairDate)
+                selectedData.BirthDate = convertISOToDate(selectedData.BirthDate)
                 setSelectedItem(selectedData);
                 console.log(selectedData)
             }
@@ -92,7 +92,8 @@ const DriverComponent = () => {
             { key: 'Patronymic', label: 'Отчество' },
             { key: 'BirthDate', label: 'Дата рождения' },
             { key: 'PassportSeries', label: 'Серия и номер паспорта' },
-            { key: 'Snils', label: 'Номер СНИЛС' }
+            { key: 'Snils', label: 'Номер СНИЛС' },
+            { key: 'LicenseSeries', label: 'Номер лицензии' }
         ];
 
         for (const field of fields) {
@@ -221,36 +222,56 @@ const DriverComponent = () => {
             </ScrollView>
             <div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <TextInput style={{width: '150px', marginRight: '20px'}}></TextInput>
+                    <TextInput style={{width: '150px', marginRight: '20px'}}
+                               value={selectedItem?.Name || ''}
+                               onChange={handleInputChange('Name')}></TextInput>
                     <div style={{marginRight: '20px'}}>Имя</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <TextInput style={{width: '150px', marginRight: '20px'}}></TextInput>
+                    <TextInput style={{width: '150px', marginRight: '20px'}}
+                               value={selectedItem?.Surname || ''}
+                               onChange={handleInputChange('Surname')}></TextInput>
                     <div style={{marginRight: '20px'}}>Фамилия</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <TextInput style={{width: '150px', marginRight: '20px'}}></TextInput>
+                    <TextInput style={{width: '150px', marginRight: '20px'}}
+                               value={selectedItem?.Patronymic || ''}
+                        onChange={handleInputChange('Patronymic')}></TextInput>
                     <div style={{marginRight: '20px'}}>Отчество</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <TextInput style={{width: '150px', marginRight: '20px'}}></TextInput>
+                    <TextInput style={{width: '150px', marginRight: '20px'}}
+                               value={selectedItem?.BirthDate || ''}
+                               onChange={handleInputChange('BirthDate')}></TextInput>
                     <div style={{marginRight: '20px'}}>Дата рождения</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <TextInput style={{width: '170px', marginRight: '20px'}}></TextInput>
+                    <TextInput style={{width: '170px', marginRight: '20px'}}
+                               value={selectedItem?.PassportSeries || ''}
+                               onChange={handleInputChange('PassportSeries')}></TextInput>
                     <div style={{marginRight: '20px'}}>Серия и номер паспорта</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <TextInput style={{width: '150px', marginRight: '20px'}}></TextInput>
+                    <TextInput style={{width: '150px', marginRight: '20px'}}
+                               value={selectedItem?.Snils || ''}
+                               onChange={handleInputChange('Snils')}></TextInput>
                     <div style={{marginRight: '20px'}}>Номер СНИЛС</div>
                 </div>
+                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '10px' }}>
+                    <TextInput style={{width: '150px', marginRight: '20px'}}
+                               value={selectedItem?.LicenseSeries || ''}
+                               onChange={handleInputChange('LicenseSeries')}></TextInput>
+                    <div style={{marginRight: '20px'}}>Номер лицензии</div>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start',  }}>
-                    <Button style={{marginRight: '10px'}}>Сохранить</Button>
-                    <Button style={{marginRight: '10px'}}>Удалить</Button>
-                    <Button >Создать</Button>
+                    <Button style={{marginRight: '10px'}} onClick={handleSave}>Сохранить</Button>
+                    <Button style={{marginRight: '10px'}} onClick={handleDelete}>Удалить</Button>
+                    <Button onClick={handleCreate}>Создать</Button>
                 </div>
             </div>
-
+            {alertMessage && (
+                <CustomAlert message={alertMessage} onClose={handleCloseAlert} />
+            )}
         </div>
     )
 }

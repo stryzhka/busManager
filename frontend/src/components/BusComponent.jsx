@@ -36,6 +36,7 @@ const BusComponent = () => {
     useEffect(() => {
         GetAll().then(
             result => {
+
                 if (JSON.parse(result).length === 0) {
                     setAlertMessage("Список элементов пуст");
                 }
