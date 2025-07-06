@@ -72,11 +72,12 @@ const BusStopComponent = () => {
     useEffect(() => {
         GetAll().then(
             result => {
-                if (JSON.parse(result).length === 0) {
-                    setAlertMessage("Список элементов пуст");
+                if (!result || result === "null") {
+                    setItems([]);
+                } else {
+                    console.log(JSON.parse(result))
+                    setItems(JSON.parse(result))
                 }
-                console.log(JSON.parse(result))
-                setItems(JSON.parse(result))
             }
         )
     }, []);
@@ -293,11 +294,15 @@ const BusStopComponent = () => {
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start' }}>
             <GlobalStyles />
             <ScrollView style={{width: '200px', height: '200px', marginRight: '20px'}}>
-                {items.map((item, index) => (
-                    <MenuListItem key={index} onClick={() => handleItemClick(item)}>
-                        {item.Name}
-                    </MenuListItem>
-                ))}
+                {Array.isArray(items) && items.length > 0 ? (
+                    items.map((item, index) => (
+                        <MenuListItem key={index} onClick={() => handleItemClick(item)}>
+                            {item.Name}
+                        </MenuListItem>
+                    ))
+                ) : (
+                    <div>Нет остановок</div> // Отображение, если список пуст
+                )}
             </ScrollView>
             <div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '10px' }}>

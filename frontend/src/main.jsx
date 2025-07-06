@@ -12,3 +12,11 @@ root.render(
         <App/>
     // </React.StrictMode>
 )
+
+document.addEventListener('click', (e) => {
+    const target = e.target.closest('a');
+    if (target && target.href) {
+        e.preventDefault(); // Блокируем стандартное поведение
+        window.runtime.BrowserOpenURL(target.href); // Открываем ссылку во внешнем браузере
+    }
+});
